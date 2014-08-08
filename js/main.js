@@ -150,8 +150,7 @@ function Editor(){
 	
 	this.resetTools = function(){
 		$("tool_move").className = "icon";
-		$("tool_add").className = "icon";
-		$("tool_delete").className = "icon";
+		$("tool_add").className = "icon"; 
 	}
 	
 	$("tool_undo").onclick = function(){ 
@@ -166,10 +165,7 @@ function Editor(){
 	}
 	$("tool_add").onclick = function(){ 
 		editor.SetMode(1); 
-	}
-	$("tool_delete").onclick = function(){ 
-		editor.SetMode(2); 
-	}
+	} 
 	
 	$("range_alpha").onchange = function(){ 
 		editor.imageAlpha = this.value / 100;
@@ -188,10 +184,7 @@ function Editor(){
 			case 1:
 				$("tool_add").className = "icon-selected";
 				break;
-			
-			case 2:
-				$("tool_delete").className = "icon-selected";
-				break;
+			 
 		}
 		 
 	}
@@ -374,20 +367,27 @@ function Editor(){
 				break;
 			
 			case 1: //add
-				var v = [(this.mouseX - this.centerX) / this.scaling, (this.mouseY - this.centerY )  / this.scaling];
-				this.Drag(this.verts.length);
-				this.verts.push(v); 
-				break;
-				
-			case 2: //delete
 				var v = this.GetNearestVert();
 				if(v !== null){
-					this.verts.splice(v, 1);
-					this.AddUndo();
+					this.Drag(v);
 				}else{
-					this.DragView();
+					var index =  this.GetNearestSegment(20)
+					if(index != null){
+						var v = [(this.mouseX - this.centerX) / this.scaling, (this.mouseY - this.centerY )  / this.scaling];
+						
+						console.log(this.verts);
+						//array insert 
+						this.verts.splice(index+1, 0, v);
+						
+						this.Drag(index+1); 
+					}else{
+						var v = [(this.mouseX - this.centerX) / this.scaling, (this.mouseY - this.centerY )  / this.scaling];
+						this.Drag(this.verts.length);
+						this.verts.push(v);
+					}
 				}
 				break;
+			 
 			
 			
 		}
@@ -413,21 +413,16 @@ function Editor(){
 			case 0: 
 				break;
 			
-			case 1: //add segment
-				var index =  this.GetNearestSegment(30)
-				if(index != null){
-					var v = [(this.mouseX - this.centerX) / this.scaling, (this.mouseY - this.centerY )  / this.scaling];
-					
-					console.log(this.verts);
-					//array insert 
-					this.verts.splice(index+1, 0, v);
-					
-					this.Drag(index+1); 
-				} 
+			case 1: //delete 
+				var v = this.GetNearestVert();
+				if(v !== null){
+					this.verts.splice(v, 1);
+					this.AddUndo();
+				}else{
+					this.DragView();
+				}
 				break;
-				
-			case 2: 
-				break; 
+				 
 			
 		}
 		this.Draw();
@@ -535,12 +530,7 @@ window.addEventListener("keydown", function(e) {
 			
 		case 50: //2
 			editor.SetMode(1);
-			break;
-			
-		case 51: //3
-			editor.SetMode(2);
-			break;
-			
+			break;	
 		
 		case 90: //Z
 			if(e.ctrlKey)
