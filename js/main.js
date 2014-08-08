@@ -289,11 +289,8 @@ function Editor(){
 	}
 	
 	this.Export = function(){
-		this.ResetError();
-		var mesh = this.verts.slice();
-		if(this.meshClosed)
-			mesh.push(this.verts[0]);
-		$("output").value = JSON.stringify(mesh);
+		this.ResetError(); 
+		$("output").value = JSON.stringify(this.verts);
 	}
 	
 	this.LoadMesh = function(){
