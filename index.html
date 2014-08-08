@@ -9,6 +9,7 @@
 	<style>
 	body,p,div{ margin:0; border:0;padding:0; font:11pt 'Segoe UI', Verdana} 
 	p{border:1px solid #ddd; padding:4px; padding-bottom:0px;}
+	#help{padding:5px;}
 	div{border:1px solid #555;}  
 	.icon{
 		border:1px solid #555;
@@ -70,10 +71,12 @@
 			<img id="tool_redo" class="icon" title="Redo(ctrl+Y)" src="res/redo.png" />
 			<img id="tool_move" class="icon-selected" title="Move Vertex(1)" src="res/move.png" />
 			<img id="tool_add" class="icon" title="Add Vertex(2)"   id="tool_add" src="res/add.png" />
+			
+			<input style="float:right;" id="showHelp" type="button" value="Help" />
 		</p>
 		 
  
-		<p>Edit: <input id="FunReverse" type="button" value="Reverse"/></p>
+		<p><input id="FunReverse" type="button" value="Reverse"/> | Closed <input id="closed" type="checkbox" /></p>
 		<p>Mesh: <input id="newMesh" type="button" value="New"/> 
 		<input id="export" type="button" value="Save" />
 		<input id="loadMesh" type="button" value="Load" /></p>
@@ -89,9 +92,33 @@
 		
 		<p>Alpha: <input id="range_alpha" type="range" value="60" /></p>
 		
-		<p style="margin-top:10px" >Change Image: <input id="loadFile" type="file" style="width:220px;"/> </p>
+		<p style="margin-top:10px" >Change Image: <input id="loadFile" type="file" style="width:220px;"/> <p>
+		<p> Sprite Origin <input id="offsetX" type="text"  style="width:32px;"   /> <input id="offsetY" type="text"   style="width:32px;" /> </p>		
 		<p> <img id="srcImg" src="res/img.png" width="100%" /> </p>		
 		
+		
+		
+	</div>
+	
+	<div id="help" style="background-color:#eee; display:none; position:absolute; z-index:1;">
+
+		<input id="closeHelp" type="button" value="close" style="float:left;"  />
+		<h2 style="text-align:center" >HELP</h2> 
+		<p style="font-size:20px" ><b>Controls</b></p>
+		<ul>
+			<li><b>CTRL+Z</b>: Undo</li>
+			<li><b>CTRL+Y</b>: Redo</li>
+			<li><b>1</b>: Tool Move</li>
+			<li><b>2</b>: Tool Add</li>
+			<li><b>Mouse Left</b>: Move / Add vertex</li>
+			<li><b>Mouse Right</b>: Delete vertex</li>
+			<li><b>Mouse Wheel</b>: Zoom</li>
+		</ul>
+		
+		
+		<p style="font-size:20px" ><b>Links</b></p>
+		<a href="https://marketplace.yoyogames.com/assets/225/glare-engine-2d-illumination">Glare engine on YoYo Marketplace</a><br/>
+		<a href="http://tizsoft.altervista.org/glare">Glare engine Documentation</a><br/>
 		
 		
 	</div>

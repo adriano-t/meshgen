@@ -99,6 +99,14 @@ function Editor(){
 		
 		$("output").style.width = (optWidth -25)  + "px";
 		
+		var helpW = window.innerWidth*3/4;
+		var helpH = window.innerHeight*4/5;
+		$("help").style.left = (window.innerWidth - helpW)/2 +"px" 
+		$("help").style.top = (window.innerHeight - helpH)/2 +"px" 
+		$("help").style.width = helpW + "px";
+		$("help").style.height = helpH + "px";
+		
+		
 		if(this.Draw) this.Draw();
 	}
 	this.SetSize();
@@ -124,8 +132,8 @@ function Editor(){
 	
 	this.imageAlpha = 0.6;
 	
-	this.viewX = 0;
-	this.viewY = 0;
+	this.offsetX = 0;
+	this.offsetY = 0;
 	 
 	this.mouseX = 0;
 	this.mouseY = 0;
@@ -137,6 +145,8 @@ function Editor(){
 	
 	this.mouseLeft = false;
 	this.mouseRight = false;
+	
+	this.meshClosed = false;
 	
 	this.mode = 0; 
 	
@@ -235,13 +245,45 @@ function Editor(){
 		}
 	};
 	
+	$("offsetX").onkeyup = function(){
+		var val = $("offsetX").value.replace(/[^0-9.]/g, "");
+		$("offsetX").value = val;
+		editor.offsetX = parseInt(val);
+		editor.Draw();
+	};
+	
+	$("offsetY").onkeyup = function(){
+		var val = $("offsetY").value.replace(/[^0-9.]/g, "");
+		$("offsetY").value = val;
+		editor.offsetY = parseInt(val);
+		editor.Draw();
+	};
+	
 	$("FunReverse").onclick = function(){
 		editor.verts.reverse();
+		editor.Draw();
+	}
+	
+	$("closed").onchange = function(){
+		editor.meshClosed = $("closed").checked;
+		editor.Draw();
+	}
+	
+	$("closeHelp").onclick = function(){
+		$("help").style.display="none";
+	}
+	
+		
+	$("showHelp").onclick = function(){
+		$("help").style.display="block";
 	}
 	
 	this.Export = function(){
 		this.ResetError();
-		$("output").value = JSON.stringify(this.verts);
+		var mesh = this.verts.slice();
+		if(this.meshClosed)
+			mesh.push(this.verts[0]);
+		$("output").value = JSON.stringify(mesh);
 	}
 	
 	this.LoadMesh = function(){
@@ -299,9 +341,17 @@ function Editor(){
 		editor.Draw();
 	});
 	  
-	this.img = rh.LoadSprite("res/img.png", 1); 
+	this.img = rh.LoadSprite("res/img.png", 1, function(){
+		editor.offsetX = parseInt(editor.img.width/2);
+		editor.offsetY = parseInt(editor.img.height/2);
+		
+		$("offsetX").value = editor.offsetX;
+		$("offsetY").value = editor.offsetY;
+	}); 
 	
 	this.imgDot = rh.LoadSprite("res/dot.png", 1); 
+	this.imgDotBegin = rh.LoadSprite("res/dotbegin.png", 1); 
+	this.imgDotEnd = rh.LoadSprite("res/dotend.png", 1); 
 	 
 	 
 	 
@@ -309,10 +359,21 @@ function Editor(){
 	this.Draw = function(){ 
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.ctx.globalAlpha = this.imageAlpha;
+		
+		//center origin
+		this.ctx.beginPath();
+		this.ctx.moveTo(this.centerX-10000 +0.5, this.centerY +0.5)
+		this.ctx.lineTo(this.centerX+10000 +0.5, this.centerY +0.5)
+		
+		
+		this.ctx.moveTo(this.centerX +0.5, this.centerY-10000 +0.5)
+		this.ctx.lineTo(this.centerX +0.5, this.centerY+10000 +0.5)
+		this.ctx.stroke();
+		
 		this.ctx.save();
 		this.ctx.translate(this.centerX, this.centerY);
 		this.ctx.scale(this.scaling, this.scaling);
-		this.ctx.drawImage(this.img, - this.img.width / 2,  - this.img.height / 2);
+		this.ctx.drawImage(this.img, - this.offsetX,  - this.offsetY);
 		this.ctx.restore();
 		
 		this.ctx.globalAlpha = 1;
@@ -326,12 +387,14 @@ function Editor(){
 			this.ctx.beginPath();
 			var v = this.verts[0];
 			this.ctx.moveTo(v[0] * this.scaling, v[1] * this.scaling);
-			for(var i=0; i<len; i++){
+			this.ctx.lineTo(v[0] * this.scaling, v[1] * this.scaling);
+			this.ctx.drawImage(this.imgDotBegin, v[0] * this.scaling  - 4,  v[1] * this.scaling - 4);
+			for(var i=1; i<len; i++){
 				var v = this.verts[i];
 				this.ctx.lineTo(v[0] * this.scaling, v[1] * this.scaling);
-				this.ctx.drawImage(this.imgDot, v[0] * this.scaling  - 4,  v[1] * this.scaling - 4);
+				this.ctx.drawImage(this.imgDot, v[0] * this.scaling  - 4,  v[1] * this.scaling - 4);					
 			}
-			//this.ctx.closePath();
+			if(this.meshClosed)this.ctx.closePath();
 			this.ctx.stroke();
 			this.ctx.restore();
 		}
