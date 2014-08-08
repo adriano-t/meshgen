@@ -259,6 +259,16 @@ function Editor(){
 		editor.Draw();
 	};
 	
+	$("offsetCenter").onclick = function(){
+		editor.offsetX = parseInt(editor.img.width/2);
+		editor.offsetY = parseInt(editor.img.height/2);
+		
+		$("offsetX").value = editor.offsetX;
+		$("offsetY").value = editor.offsetY;
+		editor.Draw();
+	};
+	
+	
 	$("FunReverse").onclick = function(){
 		editor.verts.reverse();
 		editor.Draw();
