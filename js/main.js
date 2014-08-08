@@ -122,6 +122,8 @@ function Editor(){
 	 
 	this.scaling = 1;
 	
+	this.imageAlpha = 0.6;
+	
 	this.viewX = 0;
 	this.viewY = 0;
 	 
@@ -144,16 +146,65 @@ function Editor(){
 	
 	this.undoList = [[]]; 
 	this.undoIndex = 0;
-	 
-	$("mode").onchange = function(){
-		editor.mode = this.selectedIndex; 
-	};
+	
+	
+	this.resetTools = function(){
+		$("tool_move").className = "icon";
+		$("tool_add").className = "icon";
+		$("tool_delete").className = "icon";
+	}
+	
+	$("tool_undo").onclick = function(){ 
+		editor.Undo();
+	}
+	$("tool_redo").onclick = function(){ 
+		editor.Redo();
+		
+	}
+	$("tool_move").onclick = function(){ 
+		editor.SetMode(0); 
+	}
+	$("tool_add").onclick = function(){ 
+		editor.SetMode(1); 
+	}
+	$("tool_delete").onclick = function(){ 
+		editor.SetMode(2); 
+	}
+	
+	$("range_alpha").onchange = function(){ 
+		editor.imageAlpha = this.value / 100;
+		editor.Draw();
+	}
+	
 	
 	this.SetMode = function(mode){
 		this.mode = mode;
-		$("mode").selectedIndex = mode;
+		editor.resetTools();
+		switch(mode){
+			case 0:
+				$("tool_move").className = "icon-selected";
+				break;
+			
+			case 1:
+				$("tool_add").className = "icon-selected";
+				break;
+			
+			case 2:
+				$("tool_delete").className = "icon-selected";
+				break;
+		}
+		 
 	}
 	 
+	$("output").onkeyup = function(){
+		editor.ResetError();
+	};
+	
+	this.ResetError = function(){
+		$("output").style.backgroundColor="initial";
+		$("loadError").innerHTML = "";
+	}
+	
 	$("export").onclick = function(){
 		editor.Export();
 	};
@@ -164,14 +215,17 @@ function Editor(){
 	
 	$("newMesh").onclick = function(){
 		if(editor.verts.length > 0){
-			var w = prompt("Current mesh will be lost.\nCreate new mesh? ","Yes");
-			if (w == "Yes"){
-				editor.verts = [];
-				editor.Draw();
-			}
+			editor.verts = [];
+			editor.Draw(); 
 		}
 	};
 	
+	
+	$("scaling").onkeyup = function(){
+		editor.scaling = Math.clamp(this.value, 0.25, 1000); 
+		$("scaling").value = editor.scaling;
+		editor.Draw();
+	};
 	
 	$("scaling+").onclick = function(){
 		editor.scaling *= 2; 
@@ -192,12 +246,40 @@ function Editor(){
 		editor.verts.reverse();
 	}
 	
-	this.Export = function(){ 
+	this.Export = function(){
+		this.ResetError();
 		$("output").value = JSON.stringify(this.verts);
 	}
 	
-	this.LoadMesh = function(){ 
-		this.verts = JSON.parse($("output").value);
+	this.LoadMesh = function(){
+		this.ResetError();
+		var error = false;
+		try {
+			var mesh = JSON.parse($("output").value);
+			if(typeof mesh == "object"){ 
+				//check mesh
+				for(i=0;i<mesh.length; i++){
+					var v = mesh[i];
+					if(v.length > 2 || typeof v[0] != "number" || typeof v[1] != "number"){
+						throw "invalid mesh" 
+						break;
+					}
+				}
+			}
+			else throw "invalid mesh" 
+			
+		}
+		catch(e) {
+			error = true;
+			$("loadError").innerHTML = "Error: invalid mesh";
+			$("output").style.backgroundColor = "#a44";
+		}
+		
+		if(!error){
+
+			this.verts = mesh;
+		}
+		
 		editor.Draw();
 	}
 	
@@ -233,7 +315,7 @@ function Editor(){
 	 
 	this.Draw = function(){ 
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		this.ctx.globalAlpha = 0.5;
+		this.ctx.globalAlpha = this.imageAlpha;
 		this.ctx.save();
 		this.ctx.translate(this.centerX, this.centerY);
 		this.ctx.scale(this.scaling, this.scaling);
@@ -337,11 +419,9 @@ function Editor(){
 					var v = [(this.mouseX - this.centerX) / this.scaling, (this.mouseY - this.centerY )  / this.scaling];
 					
 					console.log(this.verts);
-					//array insert
-					var temp = this.verts.slice(0, index+1);
-					temp.push(v);
-					this.verts = temp.concat(this.verts.slice(index+1, this.verts.length));
-
+					//array insert 
+					this.verts.splice(index+1, 0, v);
+					
 					this.Drag(index+1); 
 				} 
 				break;
@@ -422,27 +502,26 @@ function Editor(){
 	
 		if(this.undoIndex > 0){
 			this.undoIndex--;
-			this.verts = this.undoList[this.undoIndex];
-			this.Draw();
-		}
-		console.log(this.undoIndex, this.undoList);
+			this.verts = this.undoList[this.undoIndex].slice();
+		} 
+		
+		this.Draw(); 
 	}
 	
 	this.Redo = function(){
 		if(this.undoIndex < this.undoList.length-1){
 			this.undoIndex++;
-			this.verts = this.undoList[this.undoIndex];
+			this.verts = this.undoList[this.undoIndex].slice();
 			this.Draw();
 		}
-		console.log(this.undoIndex, this.undoList);
 		
 	}
 	
 	this.AddUndo = function(){
-		console.log(this.undoList.splice(this.undoIndex+1, this.undoList.length));
-		this.undoIndex++;
-		console.log("add undo: "+this.undoIndex, this.undoList);
+		this.undoList.splice(this.undoIndex+1, this.undoList.length);
 		this.undoList.push(this.verts.slice());
+		
+		this.undoIndex = this.undoList.length-1;
 	}
 	
 }
@@ -464,12 +543,17 @@ window.addEventListener("keydown", function(e) {
 			
 		
 		case 90: //Z
-			editor.Undo();
+			if(e.ctrlKey)
+				if(e.shiftKey)
+					editor.Redo();
+				else
+					editor.Undo();
 			break;
 			
 			
 		case 89: //Y
-			editor.Redo();
+			if(e.ctrlKey)
+				editor.Redo();
 			break;
 		 
 	}
