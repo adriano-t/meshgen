@@ -274,6 +274,21 @@ function Editor(){
 		editor.Draw();
 	}
 	
+	$("MirrorHor").onclick = function(){
+		for(var i=0; i<editor.verts.length; i++){
+			var v = editor.verts[i];
+			v[0] = -v[0];
+		}
+		editor.Draw();
+	}
+	$("MirrorVer").onclick = function(){
+		for(var i=0; i<editor.verts.length; i++){
+			var v = editor.verts[i];
+			v[1] = -v[1];
+		}
+		editor.Draw();
+	}
+	
 	$("closed").onchange = function(){
 		editor.meshClosed = $("closed").checked;
 		editor.Draw();
