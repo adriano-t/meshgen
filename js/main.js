@@ -79,8 +79,8 @@ function Editor(){
 		this.areaW = ((window.innerWidth-5)/4*3 - 5);
 		this.areaH = (window.innerHeight-5);
 		
-		this.centerX = this.areaW / 2;
-		this.centerY = this.areaH / 2;
+		this.centerX = Math.round(this.areaW / 2);
+		this.centerY = Math.round(this.areaH / 2);
 		
 		this.div = $("EditorDiv");
 		this.div.padding = "0px";
@@ -458,7 +458,7 @@ function Editor(){
 				}else{
 					var index =  this.GetNearestSegment(20)
 					if(index != null){
-						var v = [(this.mouseX - this.centerX) / this.scaling, (this.mouseY - this.centerY )  / this.scaling];
+						var v = [Math.round((this.mouseX - this.centerX) / this.scaling), Math.round((this.mouseY - this.centerY )  / this.scaling)];
 						
 						console.log(this.verts);
 						//array insert 
@@ -466,7 +466,7 @@ function Editor(){
 						
 						this.Drag(index+1); 
 					}else{
-						var v = [(this.mouseX - this.centerX) / this.scaling, (this.mouseY - this.centerY )  / this.scaling];
+						var v = [Math.round((this.mouseX - this.centerX) / this.scaling), Math.round((this.mouseY - this.centerY )  / this.scaling)];
 						this.Drag(this.verts.length);
 						this.verts.push(v);
 					}
@@ -516,8 +516,8 @@ function Editor(){
 	this.Update = function(){
 		if(this.dragVertex != undefined){
 			var v = this.verts[this.dragVertex];
-			v[0] = parseInt((this.mouseX - this.centerX) / this.scaling);
-			v[1] = parseInt((this.mouseY - this.centerY) / this.scaling);
+			v[0] = Math.round((this.mouseX - this.centerX) / this.scaling);
+			v[1] = Math.round((this.mouseY - this.centerY) / this.scaling);
 			this.Draw();
 			window.requestAnimFrame( function(){
 				editor.Update();
