@@ -8,7 +8,7 @@ window.onerror = function(msg, url, linenumber) {
 function StartEditor(){ 
 	editor = new Editor();
 	editor.Draw();
-	
+	editor.LoadDefault();
 		
 	editor.canvas.addEventListener("mousemove", function(s) {
 		editor.mouseX = Math.round(s.pageX - editor.ctx.canvas.offsetLeft + editor.div.scrollLeft);
@@ -312,6 +312,8 @@ function Editor(){
 		$("output").value = JSON.stringify(this.verts);
 	}
 	
+	
+	
 	this.LoadMesh = function(){
 		this.ResetError();
 		var error = false;
@@ -346,6 +348,15 @@ function Editor(){
 	
 	  
 	
+	this.LoadDefault = function(){
+		var defaultOutput ="[[12,-3],[13,-1],[13,5],[14,6],[29,6],[30,7],[30,9],[29,10],[28,11],[13,11],[12,13],[6,13],[6,11],[4,11],[2,14],[1,18],[0,18],[-13,29],[-18,29],[-22,21],[-24,17],[-24,12],[-27,10],[-27,-2],[-26,-3],[-26,-11],[-28,-11],[-28,-15],[-27,-22],[-21,-28],[-12,-28],[-8,-25],[-6,-24],[3,-21],[7,-17],[11,-4]]";
+		
+		$("output").value = defaultOutput;
+		this.LoadMesh();
+		
+		$("output").value = "";
+	}
+	
 	//Load image file
 	var finput = $("loadFile");
 	finput.onchange = function(){
@@ -376,9 +387,7 @@ function Editor(){
 	}); 
 	
 	this.imgDot = rh.LoadSprite("res/dot.png", 1); 
-	this.imgDotBegin = rh.LoadSprite("res/dotbegin.png", 1); 
-	this.imgDotEnd = rh.LoadSprite("res/dotend.png", 1); 
-	 
+	this.imgDotBegin = rh.LoadSprite("res/dotbegin.png", 1);
 	 
 	 
 	 
@@ -607,6 +616,8 @@ function Editor(){
 		
 		this.undoIndex = this.undoList.length-1;
 	}
+	
+	
 	
 }
   
