@@ -127,6 +127,10 @@ function Editor(){
 	});
 	
 	this.ctx = this.canvas.getContext("2d");
+	this.ctx.imageSmoothingEnabled = false;
+	this.ctx.mozImageSmoothingEnabled = false;
+	this.ctx.oImageSmoothingEnabled = false;
+	this.ctx.webkitImageSmoothingEnabled = false;
 	 
 	this.scaling = 1;
 	
