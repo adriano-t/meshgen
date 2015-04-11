@@ -31,8 +31,6 @@ function StartEditor(){
 			break;
 		}
 	}, false);
-
-	
 	
 	window.addEventListener("mouseup", function(e) { 
 		switch (e.which) {
@@ -129,15 +127,29 @@ function Editor(){
 	this.ctx = this.canvas.getContext("2d");
 	this.ctx.imageSmoothingEnabled = false;
 	this.ctx.mozImageSmoothingEnabled = false;
-	this.ctx.oImageSmoothingEnabled = false;
-	this.ctx.webkitImageSmoothingEnabled = false;
+	this.ctx.oImageSmoothingEnabled = false; 
 	 
 	this.scaling = 1;
+	
+	this.modes = ["move", "add", "select"];
+	
+	for(var i=0; i< this.modes.length; i++){
+		$("tool_"+this.modes[i]).index = i;
+		$("tool_"+this.modes[i]).onclick = function(){
+			editor.SetMode(this.index); 
+		}
+	}
+	
+	this.selectionStart = undefined; 
 	
 	this.imageAlpha = 0.6;
 	
 	this.offsetX = 0;
 	this.offsetY = 0;
+	 
+	this.shiftKey = 0;
+	this.ctrlKey = 0;
+	this.altKey = 0;
 	 
 	this.mouseX = 0;
 	this.mouseY = 0;
@@ -150,11 +162,12 @@ function Editor(){
 	this.mouseLeft = false;
 	this.mouseRight = false;
 	
-	this.meshClosed = false;
+	this.meshClosed = true;
 	
 	this.mode = 0; 
 	
 	this.verts = [];
+	this.vertsInfo = [];
 	
 	this.dragVertex = undefined;
 	
@@ -163,8 +176,9 @@ function Editor(){
 	
 	
 	this.resetTools = function(){
-		$("tool_move").className = "icon";
-		$("tool_add").className = "icon"; 
+		for(var i=0; i< this.modes.length; i++){
+			$("tool_"+this.modes[i]).className = "icon";
+		}
 	}
 	
 	$("tool_undo").onclick = function(){ 
@@ -172,13 +186,6 @@ function Editor(){
 	}
 	$("tool_redo").onclick = function(){ 
 		editor.Redo();
-		
-	}
-	$("tool_move").onclick = function(){ 
-		editor.SetMode(0); 
-	}
-	$("tool_add").onclick = function(){ 
-		editor.SetMode(1); 
 	} 
 	
 	$("range_alpha").onchange = function(){ 
@@ -189,18 +196,8 @@ function Editor(){
 	
 	this.SetMode = function(mode){
 		this.mode = mode;
-		editor.resetTools();
-		switch(mode){
-			case 0:
-				$("tool_move").className = "icon-selected";
-				break;
-			
-			case 1:
-				$("tool_add").className = "icon-selected";
-				break;
-			 
-		}
-		 
+		this.resetTools(); 
+		$("tool_"+this.modes[mode]).className = "icon-selected";  
 	}
 	 
 	$("output").onkeyup = function(){
@@ -249,6 +246,7 @@ function Editor(){
 		}
 	};
 	
+	
 	$("offsetX").onkeyup = function(){
 		var val = $("offsetX").value.replace(/[^0-9.]/g, "");
 		$("offsetX").value = val;
@@ -281,22 +279,19 @@ function Editor(){
 	$("MirrorHor").onclick = function(){
 		for(var i=0; i<editor.verts.length; i++){
 			var v = editor.verts[i];
-			v[0] = -v[0];
+			v.x = -v.x;
 		}
 		editor.Draw();
 	}
 	$("MirrorVer").onclick = function(){
 		for(var i=0; i<editor.verts.length; i++){
 			var v = editor.verts[i];
-			v[1] = -v[1];
+			v.y = -v.y;
 		}
 		editor.Draw();
 	}
 	
-	$("closed").onchange = function(){
-		editor.meshClosed = $("closed").checked;
-		editor.Draw();
-	}
+	 
 	
 	$("closeHelp").onclick = function(){
 		$("help").style.display="none";
@@ -309,10 +304,21 @@ function Editor(){
 	
 	this.Export = function(){
 		this.ResetError(); 
-		$("output").value = JSON.stringify(this.verts);
+		var vertices = [];
+		for(var i=0; i< this.verts.length;i++){
+			var v = this.verts[i];
+			vertices.push([v.x, v.y]);
+		}
+		$("output").value = JSON.stringify(vertices); 
 	}
 	
 	
+	this.SetOffset = function(x, y){
+		$("offsetX").value = x;
+		$("offsetY").value = y;
+		this.offsetX = x;
+		this.offsetY = y;
+	}
 	
 	this.LoadMesh = function(){
 		this.ResetError();
@@ -339,21 +345,21 @@ function Editor(){
 		}
 		
 		if(!error){
-
-			this.verts = mesh;
+			this.verts = [];
+			for(var i=0; i<mesh.length; i++){
+				this.verts.push({x: mesh[i][0], y: mesh[i][1]}); ;
+			}
 		}
 		
 		editor.Draw();
 	}
-	
-	  
-	
+	 
 	this.LoadDefault = function(){
-		var defaultOutput ="[[12,-3],[13,-1],[13,5],[14,6],[29,6],[30,7],[30,9],[29,10],[28,11],[13,11],[12,13],[6,13],[6,11],[4,11],[2,14],[1,18],[0,18],[-13,29],[-18,29],[-22,21],[-24,17],[-24,12],[-27,10],[-27,-2],[-26,-3],[-26,-11],[-28,-11],[-28,-15],[-27,-22],[-21,-28],[-12,-28],[-8,-25],[-6,-24],[3,-21],[7,-17],[11,-4]]";
+		var defaultOutput ="[[4,-20],[4,-24],[-2,-28],[-9,-28],[-17,-23],[-20,-17],[-20,-10],[-18,-9],[-20,1],[-17,6],[-13,8],[-2,9],[7,5],[13,3],[22,3],[24,5],[27,5],[29,2],[42,2],[43,-1],[29,-1],[26,-4],[23,-11],[19,-16],[11,-19]]";
 		
 		$("output").value = defaultOutput;
 		this.LoadMesh();
-		
+		this.SetOffset(23,30); 
 		$("output").value = "";
 	}
 	
@@ -378,16 +384,11 @@ function Editor(){
 		editor.Draw();
 	});
 	  
-	this.img = rh.LoadSprite("res/img.png", 1, function(){
-		editor.offsetX = parseInt(editor.img.width/2);
-		editor.offsetY = parseInt(editor.img.height/2);
-		
-		$("offsetX").value = editor.offsetX;
-		$("offsetY").value = editor.offsetY;
-	}); 
+	this.img = rh.LoadSprite("res/img.png", 1); 
 	
 	this.imgDot = rh.LoadSprite("res/dot.png", 1); 
 	this.imgDotBegin = rh.LoadSprite("res/dotbegin.png", 1);
+	this.imgDotSelect = rh.LoadSprite("res/dotselect.png", 1);
 	 
 	 
 	 
@@ -421,27 +422,71 @@ function Editor(){
 			this.ctx.translate(this.centerX, this.centerY);
 			this.ctx.beginPath();
 			var v = this.verts[0];
-			this.ctx.moveTo(v[0] * this.scaling, v[1] * this.scaling);
-			this.ctx.lineTo(v[0] * this.scaling, v[1] * this.scaling);
-			this.ctx.drawImage(this.imgDotBegin, v[0] * this.scaling  - 4,  v[1] * this.scaling - 4);
+			this.ctx.moveTo(v.x * this.scaling, v.y * this.scaling);
+			this.ctx.lineTo(v.x * this.scaling, v.y * this.scaling);
+			this.ctx.drawImage(v.selected?this.imgDotSelect:this.imgDotBegin, v.x * this.scaling  - 4,  v.y * this.scaling - 4);
 			for(var i=1; i<len; i++){
 				var v = this.verts[i];
-				this.ctx.lineTo(v[0] * this.scaling, v[1] * this.scaling);
-				this.ctx.drawImage(this.imgDot, v[0] * this.scaling  - 4,  v[1] * this.scaling - 4);					
+				this.ctx.lineTo(v.x * this.scaling, v.y * this.scaling);
+				this.ctx.drawImage(v.selected?this.imgDotSelect:this.imgDot, v.x * this.scaling  - 4,  v.y * this.scaling - 4);					
 			}
 			if(this.meshClosed)this.ctx.closePath();
 			this.ctx.stroke();
 			this.ctx.restore();
 		}
 		
+		
+		if(this.selectionStart)
+		{
+			this.ctx.globalAlpha = 0.5; 
+			var xmin = Math.min(this.selectionStart.x, this.mouseX),
+			ymin = Math.min(this.selectionStart.y, this.mouseY),
+			xmax = Math.max(this.selectionStart.x, this.mouseX),
+			ymax = Math.max(this.selectionStart.y, this.mouseY);
+			this.ctx.fillRect(
+				xmin,
+				ymin,
+				xmax-xmin,
+				ymax-ymin
+			); 
+			this.ctx.globalAlpha = 1;
+			
+		}
+		
+		if(len >3){
+			var v1 = this.verts[0];
+			var v2 = this.verts[1];
+			var v3 = this.verts[2];
+			var v4 = this.verts[3];
+			 //console.log(pointInTriangle(v4.x, v4.y, v1.x, v1.y, v2.x, v2.y, v3.x, v3.y));
+		}
+		
 	}
 	 
-	this.Drag = function(v){
-		this.dragVertex = v;
+	this.Drag = function(vIndex){
+		this.dragVertex = vIndex; 
+		var v = this.verts[vIndex];
+		v.selected = true;
+		var len = this.verts.length; 
+		for(var i=0; i<len; i++){
+			var vert = this.verts[i];
+			if(vert.selected){
+				vert.distX = vert.x - v.x;
+				vert.distY = vert.y - v.y; 
+				
+			}
+		}
 		window.requestAnimFrame( function(){
 			editor.Update();
 		});
 	}
+	
+	this.StartSelection = function(){ 
+		window.requestAnimFrame( function(){ 
+			editor.Update();
+		});
+	}
+	
 	
 	this.DragView = function(v){
 		this.viewDragged = true;
@@ -457,7 +502,9 @@ function Editor(){
 		switch(this.mode){
 			case 0: //move
 				var v = this.GetNearestVert();
-				if(v !== null){
+				if(v !== null){ 
+					if(!this.verts[v].selected && !this.shiftKey )
+						this.DeselectVertices();
 					this.Drag(v);
 				}else{
 					this.DragView();
@@ -467,23 +514,45 @@ function Editor(){
 			case 1: //add
 				var v = this.GetNearestVert();
 				if(v !== null){
+					if(!this.shiftKey)
+						this.DeselectVertices();
 					this.Drag(v);
 				}else{
 					var index =  this.GetNearestSegment(20)
 					if(index != null){
-						var v = [Math.round((this.mouseX - this.centerX) / this.scaling), Math.round((this.mouseY - this.centerY )  / this.scaling)];
-						
-						console.log(this.verts);
+						var v = {
+							x: Math.round((this.mouseX - this.centerX) / this.scaling),
+							y: Math.round((this.mouseY - this.centerY )  / this.scaling),
+							grabX: 0,
+							grabY: 0
+						};
+						 
 						//array insert 
 						this.verts.splice(index+1, 0, v);
-						
+						if(!this.shiftKey)
+							this.DeselectVertices();
+						v.selected = true;
 						this.Drag(index+1); 
 					}else{
-						var v = [Math.round((this.mouseX - this.centerX) / this.scaling), Math.round((this.mouseY - this.centerY )  / this.scaling)];
-						this.Drag(this.verts.length);
+						var v = {
+							x:Math.round((this.mouseX - this.centerX) / this.scaling),
+							y:Math.round((this.mouseY - this.centerY )  / this.scaling),
+							grabX: 0,
+							grabY: 0
+						};
 						this.verts.push(v);
+						this.Drag(this.verts.length-1);
+						if(!this.shiftKey)
+							this.DeselectVertices();
+						v.selected = true;
 					}
 				}
+				break;
+				
+			case 2: //select
+				this.selectionStart = {x:this.mouseX, y:this.mouseY};
+				this.StartSelection();
+			
 				break;
 			 
 			
@@ -497,6 +566,41 @@ function Editor(){
 				this.AddUndo();
 		this.dragVertex = undefined;
 		this.viewDragged = false;
+		 
+		if(this.selectionStart){ 
+			if(!this.shiftKey)
+				this.DeselectVertices();
+			
+			var xmin = Math.min(this.selectionStart.x, this.mouseX),
+			ymin = Math.min(this.selectionStart.y, this.mouseY),
+			xmax = Math.max(this.selectionStart.x, this.mouseX),
+			ymax = Math.max(this.selectionStart.y, this.mouseY);
+			this.SelectVertices(xmin, ymin, xmax, ymax);
+			
+			this.selectionStart = undefined;
+			this.SetMode(0);
+			this.Draw();
+		}
+	}
+	
+	this.SelectVertices = function(x1, y1, x2, y2){
+		var len = this.verts.length;
+		for(var i=0; i<len; i++){
+			var v = this.verts[i];
+			var vx = v.x*this.scaling + this.centerX
+			var vy = v.y*this.scaling + this.centerY; 
+			if(vx > x1 && vy > y1 && vx < x2 && vy < y2){
+				v.selected = true; 
+			}
+		} 
+	}
+	
+	this.DeselectVertices = function(){
+		var len = this.verts.length;
+		for(var i=0; i<len; i++){
+			this.verts[i].selected = false;
+		}
+		
 	}
 	
 	this.RightRelease = function(){
@@ -527,17 +631,29 @@ function Editor(){
 	}
 	
 	this.Update = function(){
-		if(this.dragVertex != undefined){
+		if(this.dragVertex != undefined)
+		{
 			var v = this.verts[this.dragVertex];
-			v[0] = Math.round((this.mouseX - this.centerX) / this.scaling);
-			v[1] = Math.round((this.mouseY - this.centerY) / this.scaling);
+			v.x = Math.round((this.mouseX - this.centerX  - v.grabX) / this.scaling);
+			v.y = Math.round((this.mouseY - this.centerY - v.grabY) / this.scaling);
+			
+			var len = this.verts.length;
+			for(var i=0; i<len; i++){
+				var vert = this.verts[i];
+				if(vert.selected){ 
+					vert.x = v.x + vert.distX;
+					vert.y = v.y + vert.distY;
+				}
+			}
+		
 			this.Draw();
 			window.requestAnimFrame( function(){
 				editor.Update();
 			});
 		}
 		
-		if(this.viewDragged){
+		if(this.viewDragged)
+		{
 			this.centerX += this.mouseX - this.mouseXPrev;
 			this.centerY += this.mouseY - this.mouseYPrev;
 			this.mouseXPrev = this.mouseX;
@@ -548,15 +664,27 @@ function Editor(){
 				editor.Update();
 			});
 		}
+		
+		if(this.selectionStart)
+		{  
+			this.Draw();
+			window.requestAnimFrame( function(){
+				editor.Update();
+			}); 
+		}
 	}
 	
 	 
 	
 	
-	this.GetNearestVert = function(){
+	this.GetNearestVert = function(){ 
 		for(var i=0; i<this.verts.length; i++){
 			var v = this.verts[i];
-			if(distance(v[0]*this.scaling + this.centerX, v[1]*this.scaling + this.centerY, this.mouseX, this.mouseY) < 6){
+			var vx = v.x*this.scaling + this.centerX;
+			var vy = v.y*this.scaling + this.centerY;
+			if(distance(vx, vy, this.mouseX, this.mouseY) < 6){
+				v.grabX = this.mouseX - vx;
+				v.grabY = this.mouseY - vy;
 				return i;
 			}
 		}
@@ -575,8 +703,8 @@ function Editor(){
 			var v0 = this.verts[i];
 			var v1 = this.verts[i+1];
 			var segdist = segmentDistance(
-				v0[0]*this.scaling+this.centerX, v0[1]*this.scaling+this.centerY,
-				v1[0]*this.scaling+this.centerX, v1[1]*this.scaling+this.centerY,
+				v0.x*this.scaling+this.centerX, v0.y*this.scaling+this.centerY,
+				v1.x*this.scaling+this.centerX, v1.y*this.scaling+this.centerY,
 				this.mouseX,
 				this.mouseY);
 			if(segdist < minDist && segdist < maxDist){
@@ -621,15 +749,28 @@ function Editor(){
 	
 }
   
+window.addEventListener("keyup", function(e) {
+	editor.shiftKey = e.shiftKey;
+	editor.ctrlKey = e.ctrlKey;
+	editor.altKey = e.altKey; 
+}, false);
  
-window.addEventListener("keydown", function(e) { 
+window.addEventListener("keydown", function(e) {
+	
+	editor.shiftKey = e.shiftKey;
+	editor.ctrlKey = e.ctrlKey;
+	editor.altKey = e.altKey; 
 	switch(e.keyCode){
-		case 49: //1
+		case 49: //move
 			editor.SetMode(0);
 			break;
 			
-		case 50: //2
+		case 50: //add
 			editor.SetMode(1);
+			break;	
+			
+		case 51: //select
+			editor.SetMode(3);
 			break;	
 		
 		case 90: //Z
